@@ -19,6 +19,7 @@ def compute_v(
     layer: int,
     left_vector: torch.Tensor,
     context_templates: List[str],
+    beta: float = 1.0
 ) -> torch.Tensor:
     """
     Computes the value (right) vector for the rank-1 update.
@@ -141,7 +142,7 @@ def compute_v(
             torch.norm(delta) / torch.norm(target_init) ** 2
         )
         # weight_decay = hparams.v_weight_decay * torch.norm(delta) ** 2
-        loss = nll_loss + kl_loss + weight_decay
+        loss = nll_loss + beta * kl_loss + weight_decay
         print(
             f"loss {np.round(loss.item(), 3)} = {np.round(nll_loss.item(), 3)} + {np.round(kl_loss.item(), 3)} + {np.round(weight_decay.item(), 3)} "
             f"avg prob of [{request['target_new']['str']}] "
