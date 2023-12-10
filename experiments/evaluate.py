@@ -48,6 +48,7 @@ def main(
     skip_generation_tests: bool,
     conserve_memory: bool,
     dir_name: str,
+    beta: float,
 ):
     # Set algorithm-specific variables
     params_class, apply_algo = ALG_DICT[alg_name]
@@ -102,7 +103,7 @@ def main(
     ds = ds_class(DATA_DIR, size=dataset_size_limit, tok=tok)
 
     # Iterate through dataset
-    for record in ds:
+    for record in ds[:100]:
         case_id = record["case_id"]
         case_result_path = run_dir / f"case_{case_id}.json"
         if not case_result_path.exists():
@@ -113,15 +114,28 @@ def main(
                 if conserve_memory
                 else dict()
             )
-            edited_model, weights_copy = apply_algo(
-                model,
-                tok,
-                [record["requested_rewrite"]],
-                hparams,
-                copy=False,
-                return_orig_weights=True,
-                **args_conserve_memory,
-            )
+            if alg_name == "ROME":
+                print("train with beta = {}".format(beta))
+                edited_model, weights_copy = apply_algo(
+                    model,
+                    tok,
+                    [record["requested_rewrite"]],
+                    hparams,
+                    copy=False,
+                    return_orig_weights=True,
+                    **args_conserve_memory,
+                    beta = beta
+                )
+            else:
+                edited_model, weights_copy = apply_algo(
+                    model,
+                    tok,
+                    [record["requested_rewrite"]],
+                    hparams,
+                    copy=False,
+                    return_orig_weights=True,
+                    **args_conserve_memory,
+                )
             exec_time = time() - start
             print("Execution took", exec_time)
 
@@ -205,6 +219,12 @@ if __name__ == "__main__":
         help="Reduce memory usage during evaluation at the cost of a minor slowdown. "
         "Backs up model weights on CPU instead of GPU.",
     )
+    parser.add_argument(
+        "--beta",
+        type=float,
+        default=1.0,
+        help="Beta hyperparameter",
+    )
     parser.set_defaults(skip_generation_tests=False, conserve_memory=False)
     args = parser.parse_args()
 
@@ -218,4 +238,5 @@ if __name__ == "__main__":
         args.skip_generation_tests,
         args.conserve_memory,
         dir_name=args.alg_name,
+        beta=args.beta,
     )
