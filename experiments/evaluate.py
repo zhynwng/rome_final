@@ -103,7 +103,7 @@ def main(
     ds = ds_class(DATA_DIR, size=dataset_size_limit, tok=tok)
 
     # Iterate through dataset
-    for record in ds[:100]:
+    for record in ds:
         case_id = record["case_id"]
         case_result_path = run_dir / f"case_{case_id}.json"
         if not case_result_path.exists():
